@@ -1,0 +1,12 @@
+# nmap parameters
+nmap:
+  arguments: '-sV'
+  ports: ~
+  timeout: ~
+scanner:
+  hosts:
+    - '127.0.0.1'
+#    - 'sazhko.com'
+#    - '127.0.0.1/24'
+#    - '127.0.0.2'
+  parallel: 10
