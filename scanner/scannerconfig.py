@@ -1,5 +1,6 @@
 import logging
 
+import click
 import yaml
 import ipaddress
 from fqdn import FQDN
@@ -18,13 +19,14 @@ class ScannerHosts:
             hostname = FQDN(host)
             if hostname.is_valid:
                 self.parsedHosts.append(host)
+                logging.debug(f'Hostname detected: {host}')
                 continue
 
             ip_interface = ipaddress.ip_interface(host)
             for ip in ip_interface.network.hosts():
                 self.parsedHosts.append(str(ip))
 
-        logging.info(f'Calculated {len(self.parsedHosts)} host(s) to scan')
+        click.echo(click.style(f'Calculated {len(self.parsedHosts)} host(s) to scan', fg='green'))
 
 
 class ScannerConfig:
@@ -35,9 +37,11 @@ class ScannerConfig:
     scanner_hosts: ScannerHosts = None
 
     def __init__(self, path: str):
+        logging.debug('Reading config file %s', path)
         self._path = path
         stream = open(path, 'r')
         self._rawYaml = yaml.full_load(stream)
+        logging.debug('Config file loaded')
         self.scanner_hosts = ScannerHosts(self._rawYaml['scanner']['hosts'])
 
     def get_nmap_config(self):

@@ -1,21 +1,24 @@
+import os
+
 import click
 import logging
 import click_log
 
 from scanner import ScannerConfig, ScanManager
 
-logger = logging.getLogger(__name__)
-click_log.basic_config(logger)
+logger = logging.getLogger('nmapper')
+logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.DEBUG)
+# click_log.basic_config(logger)
 
 
 @click.command()
 @click_log.simple_verbosity_option(logger)
-def hello():
-    config = ScannerConfig('config.example.yaml')
+def run_scan():
+    config = ScannerConfig(f'{os.getcwd()}/config.example.yaml')
+
     manager = ScanManager(config)
     scan_results = manager.scan()
-    print(scan_results)
 
 
 if __name__ == '__main__':
-    hello()
+    run_scan()
