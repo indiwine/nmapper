@@ -1,0 +1,9 @@
+Scan results for {{ hosts|length }} host(s):
+
+{% for host in hosts %}
+Ip/Hostname: {{ host.host }}
+TCP ports:
+{% for number, port in host.tcp.items() %}
+{{ number }}: {{ port.state }} | {{ port.product }} {{ port.version }}{% endfor %}
+_______________________________________________
+{% endfor %}

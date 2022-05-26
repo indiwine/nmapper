@@ -1,12 +1,18 @@
 # nmap parameters
 nmap:
-  arguments: '-sV'
+  # Standard nmap arguments
+  arguments: '-sT -sV -A -sC -Pn -sU'
+  # Ports to scan
   ports: ~
+  # Timeout for each scan (one host)
   timeout: ~
 scanner:
+  # Array of hostnames, ip addresses or CIDR
   hosts:
     - '127.0.0.1'
-#    - 'sazhko.com'
+    - 'sazhko.com'
+    - '83.234.118.10'
 #    - '127.0.0.1/24'
 #    - '127.0.0.2'
+  # Number of nmap process to run in parallel
   parallel: 10

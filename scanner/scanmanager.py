@@ -1,5 +1,6 @@
 import logging
 import time
+from typing import List
 
 import click
 
@@ -7,8 +8,8 @@ from scanner import ScannerConfig, ScanJob
 
 
 class ScanManager:
-    _active_jobs = []
-    _done_jobs = []
+    _active_jobs: List[ScanJob] = []
+    _done_jobs: List[ScanJob] = []
     _next_index = 0
 
     def __init__(self, config: ScannerConfig):
@@ -17,7 +18,7 @@ class ScanManager:
         self._parallel_num = config.get_parallel_num()
         self._num_hosts_to_scan = len(self._hosts_to_scan)
 
-    def scan(self):
+    def scan(self) -> List[dict]:
         click.echo(click.style(f'Start scanning {self._num_hosts_to_scan} host(s), {self._parallel_num} in parallel',
                                fg='green'))
 
@@ -55,7 +56,7 @@ class ScanManager:
 
         return scanned_hosts
 
-    def _has_no_hosts_left(self):
+    def _has_no_hosts_left(self) -> bool:
         return len(self._active_jobs) == 0 and (self._next_index + 1) > self._num_hosts_to_scan
 
     def _get_next_job(self):
@@ -66,10 +67,10 @@ class ScanManager:
         self._next_index += 1
         return ScanJob(self._config, host)
 
-    def _format_active_scans(self, s):
+    def _format_active_scans(self, s) -> str:
         return 'Now: ' + '|'.join(map(lambda job: job.host, self._active_jobs))
 
-    def _check_active_jobs(self):
+    def _check_active_jobs(self) -> int:
         done_num = 0
         for job in self._active_jobs:
             if not job.is_scanning():

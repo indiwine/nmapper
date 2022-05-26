@@ -1,24 +1,25 @@
 import logging
+from multiprocessing import Manager, Process
+import nmap
 
 from scanner import ScannerConfig
-import nmap
-from multiprocessing import Manager, Process
 
 
-def _do_scan(self, host, ports, arguments, callback, sudo, timeout):
+def _do_scan(self, host, ports, arguments, sudo, timeout, result_dict):
     scan_data = None
     error = None
     try:
         scan_data = self._nm.scan(host, ports, arguments, sudo, timeout)
+        logging.info(f'Scanning of {self.host} have been finished successfully', exc_info=scan_data)
     except Exception as err:
+        logging.error(f'Scan of {host} have failed', exc_info=err)
         error = err
 
-    if callback is not None:
-        callback(error, scan_data)
+    result_dict['scan'] = scan_data
+    result_dict['error'] = str(error)
 
 
 class ScanJob:
-    scan_result = Manager().dict()
     _process = None
 
     def __init__(self, config: ScannerConfig, host: str):
@@ -26,6 +27,9 @@ class ScanJob:
         self._config = config
         self.host = host
         self._nm = nmap.PortScanner()
+        self.scan_result = Manager().dict()
+        self.scan_result['host'] = host
+        self.scan_result['success'] = False
 
     def __del__(self):
         """
@@ -37,8 +41,6 @@ class ScanJob:
                 if self._process.is_alive():
                     self._process.terminate()
             except AssertionError:
-                # Happens on python3.4
-                # when using PortScannerAsync twice in a row
                 pass
 
         self._process = None
@@ -54,29 +56,16 @@ class ScanJob:
                   self.host,
                   nmap_config['ports'],
                   nmap_config['arguments'],
-                  self._callback_result,
                   False,  # SUDO
-                  nmap_config['timeout'])
+                  nmap_config['timeout'], self.scan_result)
         )
         self._process.start()
         logging.debug(f'New process started with pid: {self._process.pid}')
 
-    def get_result(self):
+    def get_result(self) -> dict:
         results = dict(self.scan_result)
-        return {
-            'host': self.host,
-            'success': results['result'] is not None,
-            'results': results
-        }
+        results['success'] = results['scan'] is not None
+        return results
 
     def is_scanning(self):
         return self._process.is_alive()
-
-    def _callback_result(self, error, result):
-        if error is not None:
-            logging.error(f'Scan of {self.host} have failed', exc_info=error)
-        else:
-            logging.info(f'Scanning of {self.host} have been finished successfully')
-
-        self.scan_result['scan'] = result
-        self.scan_result['error'] = error
