@@ -1,3 +1,4 @@
+import re
 
 
 class ScanResult:
@@ -7,6 +8,10 @@ class ScanResult:
 
     def __init__(self, raw_result: dict):
         self._raw_result = raw_result
+
+    @property
+    def raw_dict(self):
+        return self._raw_result
 
     @property
     def host(self) -> str:
@@ -42,10 +47,10 @@ class ScanResult:
     @property
     def has_http_service(self) -> bool:
         result = False
+        regex = r"http"
         for port_definition in self.tcp.values():
-            if port_definition['name'] == 'http':
+            if re.search(regex, port_definition['name']) is not None:
                 result = True
                 break
 
         return result
-

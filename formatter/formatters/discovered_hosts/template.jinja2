@@ -4,6 +4,9 @@ Scan results for {{ hosts|length }} host(s):
 Ip/Hostname: {{ host.host }}
 TCP ports:
 {% for number, port in host.tcp.items() %}
-{{ number }}: {{ port.state }} | {{ port.product }} {{ port.version }}{% endfor %}
-_______________________________________________
+{{ number }}: {{ port.state }} | {{ port.product }} {{ port.version }}
+{% if 'script' in port %}{% for script, data in port.script.items() %}
+{{ script }}:{% filter indent(width=4) %}{{ data }}{% endfilter %}{% endfor %}{% endif %}
+______{% endfor %}
+====================================================
 {% endfor %}

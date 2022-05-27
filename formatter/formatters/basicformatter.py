@@ -1,9 +1,9 @@
 from typing import List
-
+from abc import ABC, abstractmethod
 from scanner import ScanResult
 
 
-class BasicFormatter:
+class BasicFormatter(ABC):
 
     def __init__(self, render_dir):
         self.render_dir = render_dir
@@ -11,5 +11,6 @@ class BasicFormatter:
     def filter_hosts(self, hosts: List[ScanResult]) -> List[ScanResult]:
         return hosts
 
+    @abstractmethod
     def render(self, hosts: List[ScanResult]):
         pass

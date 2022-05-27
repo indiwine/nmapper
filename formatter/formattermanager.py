@@ -7,9 +7,11 @@ from typing import List, Dict, Type
 
 from formatter import BasicFormatter
 from .formatters.discovered_hosts.discoveredhostsformatter import DiscoveredHostsFormatter
+from .formatters.acunetix_import.acunetiximportformatter import AcunetixImportFormatter
 
 _formatter_map: Dict[str, Type[BasicFormatter]] = {
     'discovered-hosts': DiscoveredHostsFormatter,
+    'acunetix-import': AcunetixImportFormatter
 }
 
 
@@ -23,7 +25,7 @@ class FormatterManager:
 
     def save_json_results(self):
         with open(os.path.join(self._basic_dir, 'raw_results.json'), 'w') as outfile:
-            json.dump(self.scan_results, outfile, indent=4)
+            json.dump(list(map(lambda item: item.raw_dict, self.scan_results)), outfile, indent=4)
 
     def output(self):
         for formatter_name, formatter_class in _formatter_map.items():
