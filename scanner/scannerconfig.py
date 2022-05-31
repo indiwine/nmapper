@@ -1,17 +1,24 @@
+import ipaddress
 import logging
+from typing import List
 
 import click
 import yaml
-import ipaddress
 from fqdn import FQDN
 
 
 class ScannerHosts:
-    parsedHosts = []
+    parsedHosts: List[str] = []
 
     def __init__(self, hosts: list):
         self._rawHosts = hosts
         self._parse_raw_hosts()
+
+    def __getstate__(self):
+        return self.parsedHosts
+
+    def __setstate__(self, state):
+        self.parsedHosts = state
 
     def _parse_raw_hosts(self):
         for host in self._rawHosts:
@@ -30,15 +37,12 @@ class ScannerHosts:
 
 
 class ScannerConfig:
-    _path: str = None
-
     _rawYaml: dict = None
 
     scanner_hosts: ScannerHosts = None
 
-    def __init__(self, path: str):
+    def load_from_yaml(self, path: str):
         logging.debug('Reading config file %s', path)
-        self._path = path
         stream = open(path, 'r')
         self._rawYaml = yaml.full_load(stream)
         logging.debug('Config file loaded')

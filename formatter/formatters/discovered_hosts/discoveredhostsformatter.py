@@ -1,7 +1,8 @@
 import os.path
-from typing import List
-from jinja2 import Environment, DictLoader, FileSystemLoader
 import pathlib
+from typing import List
+
+from jinja2 import Environment, FileSystemLoader
 
 from formatter import BasicFormatter
 from scanner import ScanResult

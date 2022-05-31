@@ -1,8 +1,11 @@
 import logging
 from multiprocessing import Manager, Process
+
 import nmap
 
 from scanner import ScannerConfig
+from scanner.history import ScanSnapshot
+from scanner.history.abstractsnapshot import AbstractSnapshot
 
 
 def _do_scan(self, host, ports, arguments, sudo, timeout, result_dict):
@@ -21,15 +24,20 @@ def _do_scan(self, host, ports, arguments, sudo, timeout, result_dict):
 
 class ScanJob:
     _process = None
+    _nm = None
+    scan_result = {}
+    _host = None
 
-    def __init__(self, config: ScannerConfig, host: str):
-        logging.debug(f'New job created for host {host}')
+    def __init__(self, config: ScannerConfig):
         self._config = config
-        self.host = host
-        self._nm = nmap.PortScanner()
-        self.scan_result = Manager().dict()
-        self.scan_result['host'] = host
-        self.scan_result['success'] = False
+
+    @property
+    def host(self):
+        return self._host
+
+    def set_host(self, host: str):
+        self._host = host
+        return self
 
     def __del__(self):
         """
@@ -47,6 +55,12 @@ class ScanJob:
         return
 
     def scan(self):
+        # Initializing state
+        self._nm = nmap.PortScanner()
+        self.scan_result = Manager().dict()
+        self.scan_result['host'] = self.host
+        self.scan_result['success'] = False
+
         logging.info(f'Start scanning {self.host}')
         nmap_config = self._config.get_nmap_config()
         self._process = Process(
@@ -69,3 +83,13 @@ class ScanJob:
 
     def is_scanning(self):
         return self._process.is_alive()
+
+    def save(self) -> AbstractSnapshot:
+        logging.debug(f'Saving snapshot scan for host {self._host}')
+        return ScanSnapshot(dict(self.scan_result))
+
+    def restore(self, snapshot: AbstractSnapshot):
+        state: dict = snapshot.get_state()
+        logging.debug(f'Restoring scan snapshot for host {state["host"]}')
+        self._host = state['host']
+        self.scan_result = state

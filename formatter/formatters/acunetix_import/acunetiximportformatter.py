@@ -1,6 +1,6 @@
 import csv
-import re
 import os.path
+import re
 from typing import List
 
 from formatter import BasicFormatter
@@ -26,4 +26,3 @@ class AcunetixImportFormatter(BasicFormatter):
                         f'Automatically generated import for {host.host}:{port}, {port_definition["name"]}'
                     ])
         csv_file.close()
-

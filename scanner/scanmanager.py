@@ -5,6 +5,7 @@ from typing import List
 import click
 
 from scanner import ScannerConfig, ScanJob
+from scanner.history import HistoryManager
 
 
 class ScanManager:
@@ -12,11 +13,24 @@ class ScanManager:
     _done_jobs: List[ScanJob] = []
     _next_index = 0
 
-    def __init__(self, config: ScannerConfig):
+    def __init__(self, config: ScannerConfig, history_manager: HistoryManager):
         self._config = config
+        self._history_manager = history_manager
         self._hosts_to_scan = config.scanner_hosts.parsedHosts
         self._parallel_num = config.get_parallel_num()
         self._num_hosts_to_scan = len(self._hosts_to_scan)
+
+    def continue_scan(self) -> List[dict]:
+        logging.info('Continuing previous scan')
+        snapshots = self._history_manager.load_snapshots()
+
+        for snapshot in snapshots:
+            job = ScanJob(self._config)
+            job.restore(snapshot)
+            self._done_jobs.append(job)
+
+        self._update_hosts_to_scan()
+        return self.scan()
 
     def scan(self) -> List[dict]:
         click.echo(click.style(f'Start scanning {self._num_hosts_to_scan} host(s), {self._parallel_num} in parallel',
@@ -65,7 +79,7 @@ class ScanManager:
 
         host = self._hosts_to_scan[self._next_index]
         self._next_index += 1
-        return ScanJob(self._config, host)
+        return ScanJob(self._config).set_host(host)
 
     def _format_active_scans(self, s) -> str:
         return 'Now: ' + '|'.join(map(lambda job: job.host, self._active_jobs))
@@ -76,6 +90,7 @@ class ScanManager:
             if not job.is_scanning():
                 self._active_jobs.remove(job)
                 self._done_jobs.append(job)
+                self._history_manager.save_snapshot(job.save())
                 done_num += 1
 
         while len(self._active_jobs) < self._parallel_num:
@@ -85,3 +100,11 @@ class ScanManager:
             next_job.scan()
             self._active_jobs.append(next_job)
         return done_num
+
+    def _update_hosts_to_scan(self):
+        for done_job in self._done_jobs:
+            if done_job.host in self._hosts_to_scan:
+                self._hosts_to_scan.remove(done_job.host)
+
+        self._num_hosts_to_scan = len(self._hosts_to_scan)
+        logging.debug(f'{self._num_hosts_to_scan} hosts left to scan')

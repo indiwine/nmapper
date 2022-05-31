@@ -2,12 +2,12 @@ import json
 import logging
 import os
 from datetime import datetime
-from scanner import ScanResult
 from typing import List, Dict, Type
 
 from formatter import BasicFormatter
-from .formatters.discovered_hosts.discoveredhostsformatter import DiscoveredHostsFormatter
+from scanner import ScanResult
 from .formatters.acunetix_import.acunetiximportformatter import AcunetixImportFormatter
+from .formatters.discovered_hosts.discoveredhostsformatter import DiscoveredHostsFormatter
 
 _formatter_map: Dict[str, Type[BasicFormatter]] = {
     'discovered-hosts': DiscoveredHostsFormatter,
