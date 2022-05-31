@@ -4,7 +4,8 @@ from typing import List
 
 import click
 
-from scanner import ScannerConfig, ScanJob
+from scanner import ScanJob
+from scanner.scannerconfig import ScannerConfig
 from scanner.history import HistoryManager
 
 

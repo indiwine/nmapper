@@ -5,7 +5,8 @@ import os
 import click
 
 from formatter import FormatterManager
-from scanner import ScannerConfig, ScanManager, ScanResult
+from scanner import ScanManager, ScanResult
+from scanner.scannerconfig import ScannerConfig
 from scanner.history import HistoryManager
 
 

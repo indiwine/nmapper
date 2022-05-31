@@ -4,7 +4,7 @@ import os
 from datetime import datetime
 from typing import List, Dict, Type
 
-from formatter import BasicFormatter
+from formatter.formatters.basicformatter import BasicFormatter
 from scanner import ScanResult
 from .formatters.acunetix_import.acunetiximportformatter import AcunetixImportFormatter
 from .formatters.discovered_hosts.discoveredhostsformatter import DiscoveredHostsFormatter

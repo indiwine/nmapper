@@ -4,7 +4,7 @@ import pickle
 import shutil
 from typing import List
 
-from scanner import ScannerConfig
+from scanner.scannerconfig import ScannerConfig
 from scanner.history.abstractsnapshot import AbstractSnapshot
 
 

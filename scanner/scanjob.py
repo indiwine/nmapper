@@ -3,7 +3,7 @@ from multiprocessing import Manager, Process
 
 import nmap
 
-from scanner import ScannerConfig
+from scanner.scannerconfig import ScannerConfig
 from scanner.history import ScanSnapshot
 from scanner.history.abstractsnapshot import AbstractSnapshot
 

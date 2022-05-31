@@ -4,7 +4,7 @@ from typing import List
 
 from jinja2 import Environment, FileSystemLoader
 
-from formatter import BasicFormatter
+from formatter.formatters.basicformatter import BasicFormatter
 from scanner import ScanResult
 
 

@@ -3,7 +3,7 @@ import os.path
 import re
 from typing import List
 
-from formatter import BasicFormatter
+from formatter.formatters.basicformatter import BasicFormatter
 from scanner import ScanResult
 
 
