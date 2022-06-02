@@ -23,7 +23,7 @@ def _do_scan(self, host, ports, arguments, sudo, timeout, result_dict):
 
 
 class ScanJob:
-    _process = None
+    _process: Process = None
     _nm = None
     scan_result = {}
     _host = None
@@ -87,6 +87,16 @@ class ScanJob:
     def save(self) -> AbstractSnapshot:
         logging.debug(f'Saving snapshot scan for host {self._host}')
         return ScanSnapshot(dict(self.scan_result))
+
+    def close(self):
+        logging.debug(f'Closing process, clearing resources: {self._host}')
+        try:
+            self.scan_result = dict(self.scan_result)
+            self._process.close()
+            self._process = None
+        except ValueError as e:
+            logging.error('Cannot close process, terminating', exc_info=e)
+            self._process.terminate()
 
     def restore(self, snapshot: AbstractSnapshot):
         state: dict = snapshot.get_state()

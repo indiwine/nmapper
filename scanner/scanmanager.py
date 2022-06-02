@@ -44,7 +44,7 @@ class ScanManager:
                 length=len(self._hosts_to_scan),
                 show_eta=True,
                 show_pos=True,
-                item_show_func=self._format_active_scans
+                # item_show_func=self._format_active_scans
         ) as bar:
             while True:
                 done_num = self._check_active_jobs()
@@ -92,6 +92,7 @@ class ScanManager:
                 self._active_jobs.remove(job)
                 self._done_jobs.append(job)
                 self._history_manager.save_snapshot(job.save())
+                job.close()
                 done_num += 1
 
         while len(self._active_jobs) < self._parallel_num:
