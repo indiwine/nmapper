@@ -1,3 +1,4 @@
+import gc
 import logging
 from multiprocessing import Manager, Process
 
@@ -8,12 +9,14 @@ from scanner.history import ScanSnapshot
 from scanner.history.abstractsnapshot import AbstractSnapshot
 
 
-def _do_scan(self, host, ports, arguments, sudo, timeout, result_dict):
+def _do_scan(host, ports, arguments, sudo, timeout, result_dict):
+    nm = nmap.PortScanner()
+
     scan_data = None
     error = None
     try:
-        scan_data = self._nm.scan(host, ports, arguments, sudo, timeout)
-        logging.info(f'Scanning of {self.host} have been finished successfully', exc_info=scan_data)
+        scan_data = nm.scan(host, ports, arguments, sudo, timeout)
+        logging.info(f'Scanning of {host} have been finished successfully')
     except Exception as err:
         logging.error(f'Scan of {host} have failed', exc_info=err)
         error = err
@@ -24,7 +27,6 @@ def _do_scan(self, host, ports, arguments, sudo, timeout, result_dict):
 
 class ScanJob:
     _process: Process = None
-    _nm = None
     scan_result = {}
     _host = None
 
@@ -56,7 +58,6 @@ class ScanJob:
 
     def scan(self):
         # Initializing state
-        self._nm = nmap.PortScanner()
         self.scan_result = Manager().dict()
         self.scan_result['host'] = self.host
         self.scan_result['success'] = False
@@ -66,12 +67,12 @@ class ScanJob:
         self._process = Process(
             target=_do_scan,
             daemon=True,
-            args=(self,
-                  self.host,
+            args=(self.host,
                   nmap_config['ports'],
                   nmap_config['arguments'],
                   False,  # SUDO
-                  nmap_config['timeout'], self.scan_result)
+                  nmap_config['timeout'],
+                  self.scan_result)
         )
         self._process.start()
         logging.debug(f'New process started with pid: {self._process.pid}')
@@ -86,20 +87,22 @@ class ScanJob:
 
     def save(self) -> AbstractSnapshot:
         logging.debug(f'Saving snapshot scan for host {self._host}')
-        return ScanSnapshot(dict(self.scan_result))
+        return ScanSnapshot(self.get_result())
 
     def close(self):
         logging.debug(f'Closing process, clearing resources: {self._host}')
         try:
-            self.scan_result = dict(self.scan_result)
+            self.scan_result = None
             self._process.close()
             self._process = None
         except ValueError as e:
             logging.error('Cannot close process, terminating', exc_info=e)
             self._process.terminate()
+        gc.collect()
 
     def restore(self, snapshot: AbstractSnapshot):
         state: dict = snapshot.get_state()
         logging.debug(f'Restoring scan snapshot for host {state["host"]}')
         self._host = state['host']
         self.scan_result = state
+        return self

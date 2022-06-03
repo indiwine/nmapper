@@ -1,10 +1,16 @@
 import re
 
+from scanner.history.abstractsnapshot import AbstractSnapshot
+
 
 class ScanResult:
     @staticmethod
     def wrap(results_list: list):
         return list(map(lambda item: ScanResult(item), results_list))
+
+    @staticmethod
+    def restore(snapshot: AbstractSnapshot):
+        return ScanResult(snapshot.get_state())
 
     def __init__(self, raw_result: dict):
         self._raw_result = raw_result

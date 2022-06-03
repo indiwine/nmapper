@@ -5,9 +5,9 @@ import os
 import click
 
 from formatter import FormatterManager
-from scanner import ScanManager, ScanResult
-from scanner.scannerconfig import ScannerConfig
+from scanner import ScanManager, ScanResult, ScanJob
 from scanner.history import HistoryManager
+from scanner.scannerconfig import ScannerConfig
 
 
 @click.command()
@@ -40,17 +40,19 @@ def run_scan(verbose, config):
         scanner_config.load_from_yaml(os.path.join(os.getcwd(), config))
         history.save_config(scanner_config)
 
-    manager = ScanManager(scanner_config, history)
+    scan_manager = ScanManager(scanner_config, history)
 
     if continue_scan:
-        scan_results = manager.continue_scan()
+        scan_manager.continue_scan()
     else:
-        scan_results = manager.scan()
+        scan_manager.scan()
 
-    del manager
+    del scan_manager
     gc.collect()
 
-    scan_results = ScanResult.wrap(scan_results)
+    # TODO remove double conversion in the next iteration
+    scan_results = [ScanResult(ScanJob(config).restore(snapshot).get_result()) for snapshot in
+                    history.load_snapshots_generator()]
 
     formatter = FormatterManager(scan_results)
     formatter.save_json_results()

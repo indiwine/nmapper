@@ -2,7 +2,7 @@ import logging
 import os
 import pickle
 import shutil
-from typing import List
+from typing import List, Generator
 
 from scanner.scannerconfig import ScannerConfig
 from scanner.history.abstractsnapshot import AbstractSnapshot
@@ -54,3 +54,12 @@ class HistoryManager:
                     result.append(pickle.load(file_resource))
 
         return result
+
+    def load_snapshots_generator(self) -> Generator[AbstractSnapshot, None, None]:
+        for file in os.listdir(self._snapshot_dir):
+            file_path = os.path.join(self._snapshot_dir, file)
+            if os.path.isfile(file_path):
+                logging.debug(f'Loading scan snapshot from: {file_path}')
+                with open(file_path, 'rb') as file_resource:
+                    yield pickle.load(file_resource)
+
