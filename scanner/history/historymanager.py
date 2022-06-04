@@ -39,10 +39,21 @@ class HistoryManager:
             return pickle.load(file)
 
     def save_snapshot(self, snapshot: AbstractSnapshot):
-        file_name = os.path.join(self._snapshot_dir, snapshot.get_name() + '.serial')
+        file_name = self._get_snapshot_path(snapshot)
         logging.debug(f'Saving scan snapshot to: {file_name}')
         with open(file_name, 'wb') as file:
             pickle.dump(snapshot, file)
+
+    def remove_snapshot(self, snapshot: AbstractSnapshot):
+        file_name = self._get_snapshot_path(snapshot)
+        logging.debug(f'Removing snapshot: {file_name}')
+        try:
+            os.remove(file_name)
+        except FileNotFoundError as err:
+            logging.error(f'Cannot remove snapshot', exc_info=err)
+
+    def _get_snapshot_path(self, snapshot: AbstractSnapshot) -> str:
+        return os.path.join(self._snapshot_dir, snapshot.get_name() + '.serial')
 
     def load_snapshots(self) -> List[AbstractSnapshot]:
         result = []

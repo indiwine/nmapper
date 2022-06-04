@@ -57,7 +57,7 @@ def run_scan(verbose, config):
     formatter = FormatterManager(scan_results)
     formatter.save_json_results()
     formatter.output()
-    history.clear()
+    # history.clear()
 
 
 if __name__ == '__main__':

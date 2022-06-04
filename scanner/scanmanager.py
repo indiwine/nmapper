@@ -7,6 +7,7 @@ import click
 
 from scanner import ScanJob
 from scanner.history import HistoryManager
+from scanner.history.abstractsnapshot import AbstractSnapshot
 from scanner.scannerconfig import ScannerConfig
 
 
@@ -17,7 +18,7 @@ class ScanManager:
     def __init__(self, config: ScannerConfig, history_manager: HistoryManager):
         self._config = config
         self._history_manager = history_manager
-        self._hosts_to_scan = config.scanner_hosts.parsedHosts
+        self._hosts_to_scan = config.scanner_hosts.parsedHosts.copy()
         self._parallel_num = config.get_parallel_num()
         self._num_hosts_to_scan = len(self._hosts_to_scan)
 
@@ -25,12 +26,25 @@ class ScanManager:
         logging.info('Continuing previous scan')
 
         hosts_omitted = 0
+        failed_hosts: List[str] = []
+        failed_snapshots: List[AbstractSnapshot] = []
         for snapshot in self._history_manager.load_snapshots_generator():
             job = ScanJob(self._config)
             job.restore(snapshot)
+            if not job.is_successful:
+                failed_hosts.append(job.host)
+                failed_snapshots.append(snapshot)
             if job.host in self._hosts_to_scan:
                 hosts_omitted += 1
                 self._hosts_to_scan.remove(job.host)
+
+        failed_hosts_num = len(failed_hosts)
+        if failed_hosts_num > 0 and click.prompt(f'Found {failed_hosts_num} scan(s) failed. Scan them again?',
+                                                 default=True):
+            self._hosts_to_scan = self._hosts_to_scan + failed_hosts
+            hosts_omitted -= failed_hosts_num
+            for snapshot in failed_snapshots:
+                self._history_manager.remove_snapshot(snapshot)
 
         self._num_hosts_to_scan = len(self._hosts_to_scan)
 

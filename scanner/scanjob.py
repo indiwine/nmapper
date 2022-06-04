@@ -4,9 +4,9 @@ from multiprocessing import Manager, Process
 
 import nmap
 
-from scanner.scannerconfig import ScannerConfig
 from scanner.history import ScanSnapshot
 from scanner.history.abstractsnapshot import AbstractSnapshot
+from scanner.scannerconfig import ScannerConfig
 
 
 def _do_scan(host, ports, arguments, sudo, timeout, result_dict):
@@ -79,7 +79,7 @@ class ScanJob:
 
     def get_result(self) -> dict:
         results = dict(self.scan_result)
-        results['success'] = results['scan'] is not None
+        results['success'] = self.is_successful
         return results
 
     def is_scanning(self):
@@ -106,3 +106,7 @@ class ScanJob:
         self._host = state['host']
         self.scan_result = state
         return self
+
+    @property
+    def is_successful(self) -> bool:
+        return self.scan_result['scan'] is not None
