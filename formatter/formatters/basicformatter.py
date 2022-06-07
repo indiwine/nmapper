@@ -1,3 +1,4 @@
+import os
 from abc import ABC, abstractmethod
 from typing import List
 
@@ -11,6 +12,10 @@ class BasicFormatter(ABC):
 
     def filter_hosts(self, hosts: List[ScanResult]) -> List[ScanResult]:
         return hosts
+
+    @staticmethod
+    def get_file_dir(file) -> str:
+        return os.path.dirname(os.path.realpath(file))
 
     @abstractmethod
     def render(self, hosts: List[ScanResult]):

@@ -67,10 +67,12 @@ class ScanManager:
         ) as bar:
             while True:
                 done_num = self._check_active_jobs()
+                bar.update(done_num)
                 if self._has_no_hosts_left():
                     logging.info('No more hosts to scan left')
                     break
-                bar.update(done_num)
+
+                # Waiting for a while before next iteration
                 time.sleep(0.05)
 
         click.echo(click.style(f'Scanning of {self._num_hosts_to_scan} hosts have been finished.',

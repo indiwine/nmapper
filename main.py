@@ -51,7 +51,7 @@ def run_scan(verbose, config):
     gc.collect()
 
     # TODO remove double conversion in the next iteration
-    scan_results = [ScanResult(ScanJob(config).restore(snapshot).get_result()) for snapshot in
+    scan_results = [ScanResult(ScanJob(scanner_config).restore(snapshot).get_result()) for snapshot in
                     history.load_snapshots_generator()]
 
     formatter = FormatterManager(scan_results)

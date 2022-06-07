@@ -1,3 +1,4 @@
+import hashlib
 import re
 
 from scanner.history.abstractsnapshot import AbstractSnapshot
@@ -24,6 +25,10 @@ class ScanResult:
         return self._raw_result['host']
 
     @property
+    def host_hash(self) -> str:
+        return hashlib.md5(self.host.encode()).hexdigest()
+
+    @property
     def is_success(self) -> bool:
         return self._raw_result['success']
 
@@ -39,8 +44,7 @@ class ScanResult:
     def scan(self) -> dict:
         scan = self._raw_result['scan']['scan']
         ips = list(scan.keys())
-        ip = ips.pop()
-        return scan[ip]
+        return scan[ips.pop()] if len(ips) > 0 else {}
 
     @property
     def has_tcp(self) -> bool:
@@ -49,6 +53,25 @@ class ScanResult:
     @property
     def tcp(self) -> dict:
         return self.scan['tcp'] if self.has_tcp else {}
+
+    @property
+    def hostnames(self) -> str:
+        result = ''
+        scan = self.scan
+        if 'hostnames' in scan:
+            result = ', '.join(list(map(lambda item: item['name'], scan['hostnames'])))
+
+        return result
+
+    @property
+    def host_os(self) -> str:
+        result = ''
+        scan = self.scan
+        if 'osmatch' in scan and len(scan['osmatch']) > 0:
+            os = scan['osmatch'][0]
+            result = f'{os["name"]} ({os["accuracy"]}%)'
+
+        return result
 
     @property
     def has_http_service(self) -> bool:
@@ -60,3 +83,6 @@ class ScanResult:
                 break
 
         return result
+
+    def count_ports(self, port_type: str):
+        return len(list(filter(lambda item: item['state'] == port_type, self.tcp.values())))

@@ -1,12 +1,160 @@
-Scan results for {{ hosts|length }} host(s):
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Scanner report</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="assets/css/uikit.min.css"/>
+    <script src="assets/js/uikit.min.js"></script>
+    <script src="assets/js/uikit-icons.min.js"></script>
+</head>
+<body class="uk-background-muted">
+<div class="uk-container">
+    <div uk-grid class="uk-container uk-margin-right uk-margin-left uk-margin-top uk-margin-bottom">
+
+        {% for host in hosts %}
+            <div class="uk-width-1-2">
+                <div class="uk-card uk-card-default uk-margin uk-card-hover">
+                    <div class="uk-card-badge uk-label">{{ host.tcp|length }} port(s)</div>
+                    <div class="uk-card-header">
+                        <div class="uk-grid-small uk-flex-middle" uk-grid>
+                            <div class="uk-width-auto">
+                                <h3>
+                                    {{ host.host }}
+
+                                </h3>
+                            </div>
+                            <div class="uk-width-expand">
+                                <p>{{ host.nmap_scan_stats.timestr }}</p>
+                                <p>
+                                    {{ host.host_os }}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="uk-card-body">
+                        {% if host.hostnames %}
+                            <p>Hostnames: <span>{{ host.hostnames }}</span></p>
+                        {% else %}
+                            <p>No hostnames found</p>
+                        {% endif %}
+                        {% set opend_ports = host.count_ports('open') %}
+                        {% set closed_ports = host.count_ports('closed') %}
+                        {% set filtered_ports = host.count_ports('filtered') %}
+                        <p>
+                            {% if opend_ports > 0 %}
+                                <span class="uk-label uk-label-success">{{ opend_ports }} Open</span>
+                            {% endif %}
+
+                            {% if closed_ports > 0 %}
+                                <span class="uk-label uk-label-warning">{{ closed_ports }} Closed</span>
+                            {% endif %}
+
+                            {% if filtered_ports > 0 %}
+                                <span class="uk-label">{{ filtered_portss }} Filtered</span>
+                            {% endif %}
+                        </p>
+                    </div>
+                    <div class="uk-card-footer">
+                        <button uk-toggle="target: #host-{{ host.host_hash }}" type="button"
+                                class="uk-button uk-button-text">
+                            Show ports
+                        </button>
+                    </div>
+
+                </div>
+            </div>
+        {% endfor %}
+
+    </div>
+
+    <ul class="uk-pagination uk-flex-right">
+        {% if pages.previous %}
+            <li><a href="{{ pages.previous }}"><span uk-pagination-previous></span></a></li>
+        {% endif %}
+
+        {% for page in pages.pages %}
+
+            {% if page.active %}
+                <li class="uk-active"><span>{{ page.title }}</span></li>
+            {% else %}
+                <li><a href="{{ page.page }}">{{ page.title }}</a></li>
+            {% endif %}
+
+        {% endfor %}
+
+        {% if pages.next %}
+            <li><a href="{{ pages.next }}"><span uk-pagination-next></span></a></li>
+        {% endif %}
+    </ul>
+</div>
+
+
+
 
 {% for host in hosts %}
-Ip/Hostname: {{ host.host }}
-TCP ports:
-{% for number, port in host.tcp.items() %}
-{{ number }}: {{ port.state }} | {{ port.product }} {{ port.version }}
-{% if 'script' in port %}{% for script, data in port.script.items() %}
-{{ script }}:{% filter indent(width=4) %}{{ data }}{% endfilter %}{% endfor %}{% endif %}
-______{% endfor %}
-====================================================
+    <div id="host-{{ host.host_hash }}" uk-modal class="uk-modal-container">
+        <div class="uk-modal-dialog uk-modal-body">
+            <h2 class="uk-modal-title uk-text-middle">Ports found at {{ host.host }}</h2>
+            <div>
+                <table class="uk-table uk-table-divider">
+                    <caption>Found {{ host.tcp|length }} port(s)</caption>
+                    <thead>
+                    <tr>
+                        <th class="uk-width-1-6">Port</th>
+                        <th class="uk-width-1-6">State</th>
+                        <th>Product</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for number, port in host.tcp.items() %}
+                        <tr>
+                            <td>
+                                {{ number }}
+                                <span class="uk-badge">{{ port.name }}</span>
+                            </td>
+                            <td>
+                                <span class="uk-label
+                                {% if port.state == 'open' %}
+                                uk-label-success
+                                {% elif port.state == 'closed' %}
+                                uk-label-warning
+                                {% endif %}
+                                ">{{ port.state }}</span>
+
+                            </td>
+                            <td>{{ port.product }} {{ port.version }} {{ port.extrainfo }}</td>
+                        </tr>
+                        {% if 'script' in port %}
+                            <tr>
+                                <td colspan="3">
+                                    <ul uk-accordion class="uk-margin-left">
+                                        {% for script, data in port.script.items() %}
+                                            <li>
+                                                <a class="uk-accordion-title uk-text-small" href="#">{{ script }}</a>
+                                                <div class="uk-accordion-content">
+                                                    <pre style="text-overflow: ellipsis;white-space: break-spaces;"
+                                                    >{{ data|trim|escape }}</pre>
+                                                </div>
+                                            </li>
+                                        {% endfor %}
+
+                                    </ul>
+                                </td>
+                            </tr>
+
+                        {% endif %}
+
+
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <button class="uk-modal-close uk-button uk-button-primary uk-width-1-1" type="button">Close</button>
+        </div>
+    </div>
 {% endfor %}
+
+</body>
+</html>
