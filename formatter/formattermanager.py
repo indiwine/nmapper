@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+import socket
 from datetime import datetime
 from typing import List, Dict, Type
 
@@ -22,6 +23,10 @@ class FormatterManager:
         self._basic_dir = f'{os.getcwd()}/scan-{now.strftime("%d-%m-%Y-%H%M%S")}'
         logging.debug(f'Creating scan dir: {self._basic_dir}')
         os.mkdir(self._basic_dir)
+        self._sort_results()
+
+    def _sort_results(self):
+        self.scan_results.sort(key=lambda item: socket.inet_aton(item.host))
 
     def save_json_results(self):
         with open(os.path.join(self._basic_dir, 'raw_results.json'), 'w') as outfile:
